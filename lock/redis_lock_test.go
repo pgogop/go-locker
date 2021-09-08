@@ -2,12 +2,38 @@ package lock
 
 import (
 	"fmt"
+	"github.com/gomodule/redigo/redis"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
+func getRedisPool() (*redis.Pool, error) {
+	db := redis.DialDatabase(0)
+	pwd := redis.DialPassword("")
+
+	pool := &redis.Pool{
+		MaxIdle:   5,
+		MaxActive: 200,
+		Dial: func() (redis.Conn, error) {
+			rc, err := redis.Dial("tcp", "localhost:16379", db, pwd)
+			if err != nil {
+				return nil, err
+			}
+			return rc, nil
+		},
+		IdleTimeout: 29 * time.Second,
+		Wait:        true,
+	}
+
+	return pool, nil
+}
+
 func TestLock(t *testing.T) {
-	locker := RedisLocker{}
+	pool, _ := getRedisPool()
+	locker := RedisLocker{
+		pool: pool,
+	}
 	//ctx := context.Background()
 	req := LockReq{
 		Key:        "l-key1",
@@ -20,9 +46,15 @@ func TestLock(t *testing.T) {
 	releaseRess, _ := locker.ReleaseLock(req)
 	fmt.Println(res, res2, err)
 	fmt.Println(releaseRess)
+
+	assert.Equal(t, nil, err)
 }
+
 func TestMLock(t *testing.T) {
-	locker := RedisLocker{}
+	pool, _ := getRedisPool()
+	locker := RedisLocker{
+		pool: pool,
+	}
 	//ctx := context.Background()
 	reqs := []LockReq{
 		{
@@ -42,14 +74,19 @@ func TestMLock(t *testing.T) {
 		},
 	}
 
-	res := locker.MLock(reqs)
+	res, err := locker.MLock(reqs)
 	releaseRess := locker.MReleaseLock(reqs)
-	fmt.Println(res)
+	fmt.Println(res, err)
 	fmt.Println(releaseRess)
+
+	assert.Equal(t, nil, err)
 }
 
 func TestMTryLock(t *testing.T) {
-	locker, _ := New("redis")
+	pool, _ := getRedisPool()
+	locker := RedisLocker{
+		pool: pool,
+	}
 
 	reqs := []LockReq{
 		{
@@ -84,10 +121,14 @@ func TestMTryLock(t *testing.T) {
 	//releaseRess2 := locker.MReleaseLock(reqs)
 	fmt.Println(res)
 	//fmt.Println(releaseRess2)
+	//assert.Equal(t, nil,err)
 }
 
 func TestTryLock(t *testing.T) {
-	locker, _ := New("redis")
+	pool, _ := getRedisPool()
+	locker := RedisLocker{
+		pool: pool,
+	}
 
 	req := LockReq{
 		Key:        "l-key1",
