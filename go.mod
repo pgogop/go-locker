@@ -1,4 +1,4 @@
-module github.com/xiongchao123/go-locker
+module github.com/pgogop/go-locker
 
 go 1.16
 
