@@ -28,11 +28,11 @@ type LockReq struct {
 	ExpireTime uint
 }
 
-func New(driver string) (Locker, error) {
-	switch driver {
-	case DriverRedis:
-		return &RedisLocker{}, nil
-	default:
-		return nil, errors.New("unsupported driver : " + driver)
-	}
-}
+//func New(driver string) (Locker, error) {
+//	switch driver {
+//	case DriverRedis:
+//		return &RedisLocker{}, nil
+//	default:
+//		return nil, errors.New("unsupported driver : " + driver)
+//	}
+//}
